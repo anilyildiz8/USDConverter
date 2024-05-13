@@ -1,44 +1,46 @@
 package com.example.currency;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.RecyclerView;
-import android.os.Bundle;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.List;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import java.util.Map;
-import android.util.Log;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import android.widget.Spinner;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.view.View;
-import android.widget.Toast;
-import android.widget.TextView;
-import java.util.Locale;
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
     List<String> currencyCodes = Arrays.asList("TRY", "EUR", "GBP", "JPY", "CAD", "AUD", "CNY");
-    private RecyclerView recyclerView;
     private CurrencyAdapter adapter;
     private ExchangeRatesManager exchangeRatesManager;
     private List<Currency> currencyList;
     EditText editTextAmount;
     Button buttonConvert;
     Spinner spinnerFromCurrency, spinnerToCurrency;
-    ArrayAdapter<String> spinnerAdapter;
 
 
     @Override
@@ -47,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        recyclerView = findViewById(R.id.RecyclerView);
+        RecyclerView recyclerView = findViewById(R.id.RecyclerView);
         currencyList = new ArrayList<>();
         exchangeRatesManager = new ExchangeRatesManager();
         adapter = new CurrencyAdapter(this, currencyList);
@@ -67,16 +69,13 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d("InitialEditTextValue", "EditText Amount Value: " + (editTextAmount != null ? editTextAmount.getText().toString() : "null"));
 
-        editTextAmount.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_DONE || (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
-                    // Hide the keyboard
-                    hideKeyboard();
-                    return true;
-                }
-                return false;
+        editTextAmount.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE || (event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                // Hide the keyboard
+                hideKeyboard();
+                return true;
             }
+            return false;
         });
         hideSystemBars();
 
@@ -115,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
         spinnerToCurrency.setAdapter(spinnerAdapterWithoutUSD);
 
         // Create ArrayAdapter for the first spinner with USD only
-        ArrayAdapter<String> spinnerAdapterUSD = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Arrays.asList("USD"));
+        ArrayAdapter<String> spinnerAdapterUSD = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Collections.singletonList("USD"));
         spinnerAdapterUSD.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerFromCurrency.setAdapter(spinnerAdapterUSD);
 
@@ -123,18 +122,12 @@ public class MainActivity extends AppCompatActivity {
         buttonConvert = findViewById(R.id.buttonConvert);
 
         // Set OnClickListener for the Convert button
-        buttonConvert.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                convertCurrency();
-            }
-        });
+        buttonConvert.setOnClickListener(v -> convertCurrency());
     }
 
     // Method to initialize currency list
     private void initializeCurrencyList() {
         for (String currencyCode : currencyCodes) {
-            int iconResId = getIconResourceIdForCurrency(currencyCode);
             currencyList.add(new Currency(0, "", 0.0, currencyCode));
         }
     }
@@ -180,49 +173,48 @@ public class MainActivity extends AppCompatActivity {
 
 
     private void convertCurrency() {
-        // Log the current value of editTextAmount
+
         Log.d("EditTextValue", "EditText Amount Value: " + (editTextAmount != null ? editTextAmount.getText().toString() : "null"));
 
-        // Get the selected currencies and amount entered by the user
+
         String fromCurrency = spinnerFromCurrency.getSelectedItem().toString();
         String toCurrency = spinnerToCurrency.getSelectedItem().toString();
         double amount;
 
         if (editTextAmount == null || editTextAmount.getText().toString().trim().isEmpty()) {
-            // Show pop-up indicating empty amount
+
             Log.d("ConvertCurrency", "Empty or null amount entered");
             Toast.makeText(MainActivity.this, "Please enter an amount", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Check if amount is valid
+
         try {
             amount = Double.parseDouble(editTextAmount.getText().toString());
         } catch (NumberFormatException e) {
-            // Handle invalid input
+
             Toast.makeText(MainActivity.this, "Please enter a valid amount", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Fetch exchange rates asynchronously
+
         fetchExchangeRates(new ExchangeRatesCallback() {
             @Override
             public void onSuccess(ExchangeRatesResponse exchangeRatesResponse) {
-                // Get the exchange rates
                 Map<String, Double> exchangeRates = exchangeRatesResponse.getExchangeRates();
 
-                // Check if both currencies are available in exchange rates
-                if (exchangeRates.containsKey(fromCurrency) && exchangeRates.containsKey(toCurrency)) {
-                    // Perform currency conversion
+                if (exchangeRates != null && exchangeRates.containsKey(fromCurrency) && exchangeRates.containsKey(toCurrency)) {
                     double fromRate = exchangeRates.get(fromCurrency);
                     double toRate = exchangeRates.get(toCurrency);
                     double convertedAmount = (amount / fromRate) * toRate;
 
-                    // Find the EditText for converted amount
                     EditText editTextConvertedAmount = findViewById(R.id.editTextConvertedAmount);
 
-                    // Set the text of the converted amount EditText
-                    editTextConvertedAmount.setText(String.format(Locale.getDefault(), "%.2f %s", convertedAmount, toCurrency));
+                    if (editTextConvertedAmount != null) {
+                        editTextConvertedAmount.setText(String.format(Locale.getDefault(), "%.2f %s", convertedAmount, toCurrency));
+                    } else {
+                        Log.e("MainActivity", "EditTextConvertedAmount is null");
+                    }
                 } else {
                     Toast.makeText(MainActivity.this, "Exchange rates not available for selected currencies", Toast.LENGTH_SHORT).show();
                 }
@@ -234,9 +226,9 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "Failed to fetch exchange rates: " + errorMessage, Toast.LENGTH_SHORT).show();
             }
         });
+
     }
 
-    // Define a callback interface for handling exchange rates response
     interface ExchangeRatesCallback {
         void onSuccess(ExchangeRatesResponse exchangeRatesResponse);
         void onFailure(String errorMessage);
@@ -246,16 +238,16 @@ public class MainActivity extends AppCompatActivity {
     private void fetchExchangeRates(ExchangeRatesCallback callback) {
         exchangeRatesManager.getLatestExchangeRates(new Callback<ExchangeRatesResponse>() {
             @Override
-            public void onResponse(Call<ExchangeRatesResponse> call, Response<ExchangeRatesResponse> response) {
+            public void onResponse(@NonNull Call<ExchangeRatesResponse> call, @NonNull Response<ExchangeRatesResponse> response) {
                 if (response.isSuccessful()) {
                     ExchangeRatesResponse ratesResponse = response.body();
-                    Log.d("APIResponse", "Response Body: " + ratesResponse.toString());
                     if (ratesResponse != null) {
+                        Log.d("APIResponse", "Response Body: " + ratesResponse);
                         Log.d("APIResponse", "Base Currency: " + ratesResponse.getBaseCurrency());
                         Log.d("APIResponse", "Exchange Rates: " + ratesResponse.getExchangeRates());
                         callback.onSuccess(ratesResponse);
                     } else {
-                        callback.onFailure("Response body is null");
+                        callback.onFailure("Failed to parse exchange rates response.");
                     }
                 } else {
                     callback.onFailure("Failed to fetch exchange rates. Error code: " + response.code());
@@ -263,33 +255,24 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFailure(Call<ExchangeRatesResponse> call, Throwable t) {
+            public void onFailure(@NonNull Call<ExchangeRatesResponse> call, @NonNull Throwable t) {
                 callback.onFailure("Network error: " + t.getMessage());
             }
         });
     }
+
     private void fetchExchangeRates() {
         exchangeRatesManager.getLatestExchangeRates(new Callback<ExchangeRatesResponse>() {
             @Override
-            public void onResponse(Call<ExchangeRatesResponse> call, Response<ExchangeRatesResponse> response) {
+            public void onResponse(@NonNull Call<ExchangeRatesResponse> call, @NonNull Response<ExchangeRatesResponse> response) {
                 if (response.isSuccessful()) {
                     ExchangeRatesResponse ratesResponse = response.body();
-                    Log.d("APIResponse", "Response Body: " + ratesResponse.toString());
-                    if (ratesResponse != null) {
-                        Log.d("APIResponse", "Base Currency: " + ratesResponse.getBaseCurrency());
-                        Log.d("APIResponse", "Exchange Rates: " + ratesResponse.getExchangeRates());
-                    } else {
-                        Log.e("APIResponse", "Response body is null");
-                    }
                     updateUI(ratesResponse);
-                } else {
-                    Log.e("FetchRatesError", "Failed to fetch exchange rates. Error code: " + response.code());
-                    Log.e("FetchRatesError", "Error body: " + response.errorBody().toString());
                 }
             }
 
             @Override
-            public void onFailure(Call<ExchangeRatesResponse> call, Throwable t) {
+            public void onFailure(@NonNull Call<ExchangeRatesResponse> call, @NonNull Throwable t) {
                 Log.e("FetchRatesError", "Network error: " + t.getMessage());
             }
         });
@@ -297,16 +280,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateUI(ExchangeRatesResponse ratesResponse) {
         for (String currencyCode : currencyCodes) {
-            // Use Retrofit to fetch currency names
             getCurrencyName(currencyCode, new Callback<Map<String, String>>() {
+                @SuppressLint("NotifyDataSetChanged")
                 @Override
-                public void onResponse(Call<Map<String, String>> call, Response<Map<String, String>> response) {
+                public void onResponse(@NonNull Call<Map<String, String>> call, @NonNull Response<Map<String, String>> response) {
                     if (response.isSuccessful()) {
                         Map<String, String> currencyNames = response.body();
                         if (currencyNames != null) {
-                            String name = currencyNames.get(currencyCode); // Get the name for this currency code
-                            double rate = ratesResponse.getExchangeRates().getOrDefault(currencyCode, 0.0); // Get the rate for this currency code
-                            int iconResourceId = getIconResourceIdForCurrency(currencyCode); // Get the icon resource ID for this currency code
+                            String name = currencyNames.get(currencyCode);
+                            double rate = ratesResponse.getExchangeRates().getOrDefault(currencyCode, 0.0);
+                            int iconResourceId = getIconResourceIdForCurrency(currencyCode);
 
                             Log.d("CurrencyResponse", "Currency Code: " + currencyCode + ", Currency Name: " + name + ", Rate: " + rate);
 
@@ -329,35 +312,12 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 @Override
-                public void onFailure(Call<Map<String, String>> call, Throwable t) {
+                public void onFailure(@NonNull Call<Map<String, String>> call, @NonNull Throwable t) {
                     Log.e("CurrencyResponse", "Failed to fetch currency names: " + t.getMessage());
                 }
             });
         }
     }
-
-
-    // Define a class to hold currency information including icon resource ID
-    class CurrencyInfo {
-        private String name;
-        private int iconResourceId;
-
-        public CurrencyInfo(String name, int iconResourceId) {
-            this.name = name;
-            this.iconResourceId = iconResourceId;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public int getIconResourceId() {
-            return iconResourceId;
-        }
-    }
-
-
-
     // Correct the method signature to accept the correct callback type
     public void getCurrencyName(String currencyCode, Callback<Map<String, String>> callback) {
         // Use the CurrencyNamesService interface to create a service instance

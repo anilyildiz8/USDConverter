@@ -6,12 +6,14 @@ import java.util.Map;
 public class ExchangeRatesResponse {
     @SerializedName("base")
     private String baseCurrency;
-
     @SerializedName("rates")
     private Map<String, Double> exchangeRates;
 
-    @SerializedName("names")
-    private Map<String, String> currencyNames; // Added field to hold currency names
+    // Constructor to initialize the fields
+    public ExchangeRatesResponse(String baseCurrency, Map<String, Double> exchangeRates) {
+        this.baseCurrency = baseCurrency;
+        this.exchangeRates = exchangeRates;
+    }
 
     public String getBaseCurrency() {
         return baseCurrency;
@@ -19,9 +21,5 @@ public class ExchangeRatesResponse {
 
     public Map<String, Double> getExchangeRates() {
         return exchangeRates;
-    }
-
-    public Map<String, String> getCurrencyNames() {
-        return currencyNames;
     }
 }

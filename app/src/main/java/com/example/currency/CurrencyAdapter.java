@@ -6,7 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
+import java.util.Locale;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -14,8 +14,8 @@ import java.util.List;
 
 public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.CurrencyViewHolder> {
 
-    private Context context;
-    private List<Currency> currencyList;
+    private final Context context;
+    private final List<Currency> currencyList;
 
     public CurrencyAdapter(Context context, List<Currency> currencyList) {
         this.context = context;
@@ -32,21 +32,15 @@ public class CurrencyAdapter extends RecyclerView.Adapter<CurrencyAdapter.Curren
     @Override
     public void onBindViewHolder(@NonNull CurrencyViewHolder holder, int position) {
         Currency currency = currencyList.get(position);
-        holder.currencyIcon.setImageResource(currency.getIconResourceId()); // Use getIconResourceId method
+        holder.currencyIcon.setImageResource(currency.getIconResourceId());
         holder.currencyName.setText(currency.getName());
-        holder.currencyRate.setText(String.format("%.2f", currency.getRate())); // Format rate to two decimal places
+        holder.currencyRate.setText(String.format(Locale.getDefault(), "%.2f", currency.getRate()));
     }
+
 
     @Override
     public int getItemCount() {
         return currencyList.size();
-    }
-
-    // Method to update the list of currencies
-    public void updateCurrencyList(List<Currency> newCurrencyList) {
-        currencyList.clear(); // Clear the existing list
-        currencyList.addAll(newCurrencyList); // Add all elements from the new list
-        notifyDataSetChanged(); // Notify the adapter that the data set has changed
     }
 
     static class CurrencyViewHolder extends RecyclerView.ViewHolder {

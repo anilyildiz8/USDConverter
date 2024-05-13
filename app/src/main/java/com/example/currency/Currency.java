@@ -4,7 +4,8 @@ public class Currency {
     private int iconResourceId;
     private String name;
     private double rate;
-    private String code;
+    private final String code;
+
 
     public Currency(int iconResourceId, String name, double rate, String code) {
         this.iconResourceId = iconResourceId;
@@ -43,7 +44,4 @@ public class Currency {
         return code;
     }
 
-    public void setCode(String code) {
-        this.code = code;
-    }
 }
